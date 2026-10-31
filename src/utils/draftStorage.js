@@ -24,6 +24,7 @@ export const saveDraft = (draftData, draftId = 'create') => {
     const ts = new Date().toISOString()
     localStorage.setItem(key, JSON.stringify({ ...draftData, savedAt: ts }))
     localStorage.setItem(`${key}${TS_SUFFIX}`, ts)
+    window.dispatchEvent(new CustomEvent('drafts_updated'))
     return true
   } catch {
     return false
@@ -51,6 +52,7 @@ export const deleteDraft = (draftId = 'create') => {
     const key = `${PREFIX}${draftId}`
     localStorage.removeItem(key)
     localStorage.removeItem(`${key}${TS_SUFFIX}`)
+    window.dispatchEvent(new CustomEvent('drafts_updated'))
     return true
   } catch {
     return false
@@ -109,8 +111,33 @@ export const getAllDraftIds = () => {
 }
 
 /**
+ * Return detailed list of all drafts with their data and timestamp.
+ */
+export const getAllDrafts = () => {
+  try {
+    return getAllDraftIds().map((id) => {
+      const data = loadDraft(id)
+      const ts = getDraftTimestamp(id) || data?.savedAt || null
+      return {
+        id,
+        data,
+        name: data?.name || (id === 'create' ? 'New Hardware Draft' : `Hardware #${id} Draft`),
+        type: data?.type || data?.category || 'Hardware',
+        caliber: data?.caliber || '',
+        price: data?.price || 0,
+        timestamp: ts,
+        timeAgo: formatDraftTime(ts),
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+/**
  * Remove every gun draft from storage.
  */
 export const clearAllDrafts = () => {
   getAllDraftIds().forEach(deleteDraft)
+  window.dispatchEvent(new CustomEvent('drafts_updated'))
 }

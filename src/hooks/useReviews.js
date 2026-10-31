@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import reviewService from '../services/reviewService'
 
 // ---------------------------------------------------------------------------
-// useReviews — fetch reviews for a specific product.
+// useReviews — fetch reviews for a specific product and provide CRUD operations.
 // ---------------------------------------------------------------------------
 
 export function useReviews(gunId) {
@@ -38,7 +38,26 @@ export function useReviews(gunId) {
     fetchReviews()
   }, [fetchReviews])
 
-  return { reviews, loading, error, refetch: fetchReviews }
+  const editReview = async (reviewId, reviewData) => {
+    const res = await reviewService.updateReview(gunId, reviewId, reviewData)
+    fetchReviews()
+    return res
+  }
+
+  const removeReview = async (reviewId) => {
+    const res = await reviewService.deleteReview(gunId, reviewId)
+    fetchReviews()
+    return res
+  }
+
+  return {
+    reviews,
+    loading,
+    error,
+    refetch: fetchReviews,
+    editReview,
+    removeReview,
+  }
 }
 
 // ---------------------------------------------------------------------------

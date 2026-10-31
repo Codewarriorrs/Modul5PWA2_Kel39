@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { RefreshCw, Plus, Loader, AlertCircle, PackageOpen } from 'lucide-react'
 import { useGuns } from '../hooks/useGuns'
 import GUNS_LOCAL from '../data/guns'
@@ -7,6 +7,7 @@ import GunDetail from '../components/gun/GunDetail'
 import AdvancedFilter from '../components/common/AdvancedFilter'
 import ConfirmModal from '../components/modals/ConfirmModal'
 import gunService from '../services/gunService'
+import { isArchived } from '../utils/archiveStorage'
 import {
   matchesSearch,
   matchesCategory,
@@ -18,15 +19,22 @@ import {
  * Catalog page — the main product listing.
  *
  * Data source priority:
- *   1. Live API via useGuns()
+ *   1. Live API via useGuns() (with Query Cache)
  *   2. Local static array (GUNS_LOCAL) when the API is unreachable
  *
- * Features: search, category filter, sort, CRUD actions, detail modal.
+ * Filters out soft-deleted / archived firearms.
  */
 export default function Catalog({ onNavigate }) {
   // ---- API data ----
   const { guns: apiGuns, loading, error, refetch } = useGuns({ limit: 50 })
   const [useLocal, setUseLocal] = useState(false)
+  const [, setArchiveVersion] = useState(0)
+
+  useEffect(() => {
+    const handleArchiveUpdate = () => setArchiveVersion((v) => v + 1)
+    window.addEventListener('archive_updated', handleArchiveUpdate)
+    return () => window.removeEventListener('archive_updated', handleArchiveUpdate)
+  }, [])
 
   // Decide data source
   const rawGuns = useMemo(() => {
@@ -45,9 +53,13 @@ export default function Catalog({ onNavigate }) {
 
   const categories = useMemo(() => extractCategories(rawGuns), [rawGuns])
 
+  // Filter out archived guns
   const filteredGuns = useMemo(() => {
     let result = rawGuns.filter(
-      (g) => matchesSearch(g, search) && matchesCategory(g, activeCategory),
+      (g) =>
+        !isArchived(g.id) &&
+        matchesSearch(g, search) &&
+        matchesCategory(g, activeCategory),
     )
     return sortItems(result, sortKey, sortOrder)
   }, [rawGuns, search, activeCategory, sortKey, sortOrder])
@@ -82,7 +94,10 @@ export default function Catalog({ onNavigate }) {
         gun={selectedGun}
         onBack={() => setSelectedGun(null)}
         onEdit={(g) => onNavigate && onNavigate('Edit', g)}
-        onDelete={(g) => { setSelectedGun(null); setDeleteTarget(g) }}
+        onDelete={(g) => {
+          setSelectedGun(null)
+          setDeleteTarget(g)
+        }}
       />
     )
   }
@@ -126,7 +141,10 @@ export default function Catalog({ onNavigate }) {
           onCategory={setActiveCategory}
           sortKey={sortKey}
           sortOrder={sortOrder}
-          onSort={({ key, order }) => { setSortKey(key); setSortOrder(order) }}
+          onSort={({ key, order }) => {
+            setSortKey(key)
+            setSortOrder(order)
+          }}
         />
 
         {/* States */}
@@ -170,7 +188,13 @@ export default function Catalog({ onNavigate }) {
               <GunCard
                 key={gun.id || gun.name}
                 gun={gun}
-                onSelect={setSelectedGun}
+                onSelect={(g) => {
+                  if (onNavigate) {
+                    onNavigate('Detail', g)
+                  } else {
+                    setSelectedGun(g)
+                  }
+                }}
                 onEdit={onNavigate ? (g) => onNavigate('Edit', g) : undefined}
                 onDelete={setDeleteTarget}
               />
@@ -184,7 +208,10 @@ export default function Catalog({ onNavigate }) {
             <button
               type="button"
               className="link-btn"
-              onClick={() => { setUseLocal(false); refetch() }}
+              onClick={() => {
+                setUseLocal(false)
+                refetch()
+              }}
             >
               Retry server
             </button>
@@ -201,11 +228,12 @@ export default function Catalog({ onNavigate }) {
         danger
         loading={deleting}
         onConfirm={handleDelete}
-        onCancel={() => { setDeleteTarget(null); setDeleteError('') }}
+        onCancel={() => {
+          setDeleteTarget(null)
+          setDeleteError('')
+        }}
       />
-      {deleteError && (
-        <div className="toast toast--error">{deleteError}</div>
-      )}
+      {deleteError && <div className="toast toast--error">{deleteError}</div>}
     </>
   )
 }
