@@ -26,7 +26,7 @@ import {
  */
 export default function Catalog({ onNavigate }) {
   // ---- API data (with Query Cache) ----
-  const { guns: apiGuns, loading, error, refetch, fromCache } = useGuns({ limit: 50 })
+  const { guns: apiGuns, loading, error, refetch } = useGuns({ limit: 50 })
   const [useLocal, setUseLocal] = useState(false)
   const [, setArchiveVersion] = useState(0)
 
@@ -79,7 +79,7 @@ export default function Catalog({ onNavigate }) {
       setDeleteError('')
       await gunService.deleteGun(deleteTarget.id)
       setDeleteTarget(null)
-      refetch({ bypassCache: true })
+      refetch()
     } catch (err) {
       setDeleteError(err.message || 'Failed to delete.')
     } finally {
@@ -115,40 +115,11 @@ export default function Catalog({ onNavigate }) {
 
       <section>
         <div className="list-head">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2>Current stock</h2>
-            {fromCache && (
-              <span
-                className="mono-badge"
-                style={{
-                  color: 'var(--brass)',
-                  borderColor: 'var(--brass)',
-                  fontSize: '12px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-                title="Data dimuat instan dari Query Cache"
-              >
-                ⚡ Cached
-              </span>
-            )}
-          </div>
-
-          <div className="list-head-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2>Current stock</h2>
+          <div className="list-head-right">
             <span className="count">
               {filteredGuns.length} piece{filteredGuns.length !== 1 ? 's' : ''}
             </span>
-
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => refetch({ bypassCache: true })}
-              title="Refresh data dari server (Bypass Cache)"
-            >
-              <RefreshCw size={14} />
-            </button>
-
             {onNavigate && (
               <button
                 type="button"
@@ -192,7 +163,7 @@ export default function Catalog({ onNavigate }) {
               <button
                 type="button"
                 className="btn btn--outline"
-                onClick={() => refetch({ bypassCache: true })}
+                onClick={refetch}
               >
                 <RefreshCw size={16} /> Retry
               </button>
@@ -243,7 +214,7 @@ export default function Catalog({ onNavigate }) {
               className="link-btn"
               onClick={() => {
                 setUseLocal(false)
-                refetch({ bypassCache: true })
+                refetch()
               }}
             >
               Retry server
