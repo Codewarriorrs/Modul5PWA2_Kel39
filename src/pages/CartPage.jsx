@@ -12,20 +12,39 @@ import { useCart } from '../hooks/useCart'
 import { formatPrice } from '../utils/helpers'
 import userService from '../services/userService'
 
+const getInitialWaNumber = () => {
+  try {
+    const saved = localStorage.getItem('bore_barrel_wa_number')
+    if (saved) return saved
+  } catch {
+    // Ignore storage errors
+  }
+  return import.meta.env.VITE_WA_NUMBER || '6281234567890'
+}
+
 export default function CartPage({ onBack, onNavigateCatalog }) {
   const { cart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice } =
     useCart()
 
   const profile = userService.getUserProfile()
   const [buyerName, setBuyerName] = useState(profile.username || 'Shooter')
-  const [waNumber, setWaNumber] = useState('6281234567890')
+  const [waNumber, setWaNumber] = useState(getInitialWaNumber)
   const [notes, setNotes] = useState('')
   const [checkedOut, setCheckedOut] = useState(false)
+
+  const handleWaChange = (val) => {
+    setWaNumber(val)
+    try {
+      localStorage.setItem('bore_barrel_wa_number', val)
+    } catch {
+      // Ignore
+    }
+  }
 
   const handleCheckout = () => {
     if (cart.length === 0) return
 
-    // Clean phone number (remove non-digits, ensure country code)
+    // Clean phone number (remove non-digits, ensure international format)
     let cleanPhone = waNumber.replace(/\D/g, '')
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '62' + cleanPhone.slice(1)
@@ -252,7 +271,7 @@ export default function CartPage({ onBack, onNavigateCatalog }) {
                   type="text"
                   className="form-input"
                   value={waNumber}
-                  onChange={(e) => setWaNumber(e.target.value)}
+                  onChange={(e) => handleWaChange(e.target.value)}
                   placeholder="Contoh: 081234567890 atau 6281234567890"
                 />
               </div>
@@ -295,7 +314,13 @@ export default function CartPage({ onBack, onNavigateCatalog }) {
               <button
                 type="button"
                 className="btn btn--primary"
-                style={{ padding: '12px 24px', fontSize: '16px', backgroundColor: '#25D366', borderColor: '#25D366', color: '#fff' }}
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  backgroundColor: '#25D366',
+                  borderColor: '#25D366',
+                  color: '#fff',
+                }}
                 onClick={handleCheckout}
               >
                 <ExternalLink size={18} /> Checkout via WhatsApp
@@ -307,4 +332,3 @@ export default function CartPage({ onBack, onNavigateCatalog }) {
     </div>
   )
 }
-
