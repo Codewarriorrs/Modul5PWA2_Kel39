@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import gunService from '../services/gunService'
 
+const safeString = (val, fallback = 'An error occurred.') => {
+  if (!val) return fallback
+  if (typeof val === 'string') return val
+  if (typeof val.message === 'string') return val.message
+  if (typeof val.msg === 'string') return val.msg
+  if (typeof val.error === 'string') return val.error
+  try {
+    return JSON.stringify(val)
+  } catch {
+    return fallback
+  }
+}
+
 // ---------------------------------------------------------------------------
 // useGuns — fetch the paginated / filtered product list from the API.
 // Returns { guns, loading, error, pagination, refetch, fromCache }.
@@ -24,15 +37,19 @@ export function useGuns(params = {}) {
 
         const response = await gunService.getGuns(params, options)
 
-        if (response.success) {
+        if (response && response.success) {
           setGuns(response.data || [])
           setPagination(response.pagination || null)
           setFromCache(Boolean(response.fromCache))
         } else {
-          setError(response.message || 'Failed to fetch products.')
+          setError(
+            safeString(response?.message, 'Failed to fetch products from server.'),
+          )
         }
       } catch (err) {
-        setError(err.message || 'An error occurred while fetching products.')
+        setError(
+          safeString(err?.message, 'An error occurred while fetching products.'),
+        )
         setGuns([])
       } finally {
         setLoading(false)
@@ -78,13 +95,13 @@ export function useGunById(id) {
 
         const response = await gunService.getGunById(id, options)
 
-        if (response.success) {
+        if (response && response.success) {
           setGun(response.data)
         } else {
-          setError(response.message || 'Product not found.')
+          setError(safeString(response?.message, 'Product not found.'))
         }
       } catch (err) {
-        setError(err.message || 'Failed to load product details.')
+        setError(safeString(err?.message, 'Failed to load product details.'))
         setGun(null)
       } finally {
         setLoading(false)

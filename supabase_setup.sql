@@ -147,3 +147,4 @@ insert into public.reviews (product_id, user_id, rating, comment) values
 (1, 'Operator-Delta', 4, 'Ergonomics take some getting used to, but shoots straight.'),
 (2, 'Gunsmith-Pro', 5, 'Indestructible mechanism. Easy field stripping.'),
 (4, 'Marksman-Zero', 5, 'Excellent modularity and sub-MOA precision at 100 meters.');
+

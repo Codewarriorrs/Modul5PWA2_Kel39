@@ -81,7 +81,9 @@ export default function Catalog({ onNavigate }) {
       setDeleteTarget(null)
       refetch()
     } catch (err) {
-      setDeleteError(err.message || 'Failed to delete.')
+      setDeleteError(
+        typeof err === 'object' ? err.message || 'Failed to delete.' : String(err),
+      )
     } finally {
       setDeleting(false)
     }
@@ -158,7 +160,11 @@ export default function Catalog({ onNavigate }) {
         {!loading && error && !useLocal && (
           <div className="state-box state-box--error">
             <AlertCircle size={28} />
-            <p>{error}</p>
+            <p>
+              {typeof error === 'object'
+                ? error.message || JSON.stringify(error)
+                : String(error)}
+            </p>
             <div className="state-box__actions">
               <button
                 type="button"
@@ -237,7 +243,13 @@ export default function Catalog({ onNavigate }) {
           setDeleteError('')
         }}
       />
-      {deleteError && <div className="toast toast--error">{deleteError}</div>}
+      {deleteError && (
+        <div className="toast toast--error">
+          {typeof deleteError === 'object'
+            ? deleteError.message || JSON.stringify(deleteError)
+            : String(deleteError)}
+        </div>
+      )}
     </>
   )
 }
