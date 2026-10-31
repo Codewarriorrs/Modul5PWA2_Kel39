@@ -2,20 +2,22 @@ import axios from 'axios'
 
 // ---------------------------------------------------------------------------
 // Base URL & Supabase Key Configuration
-// Read from environment variables (.env), with safe default fallback
+// Read from environment variables (.env), with safe default fallback to the new fast Supabase project
 // ---------------------------------------------------------------------------
-const DEFAULT_FALLBACK_URL = 'https://sxunubxupdxyupnebuid.supabase.co'
+const DEFAULT_FALLBACK_URL = 'https://nbacywltlvctntbeilev.supabase.co'
 const DEFAULT_FALLBACK_KEY =
-  'sb_publishable_TXg9-r3ZVI8YZMzE90nwsQ_PU9GAmzg'
+  'sb_publishable_G0dVVrJ_30FkG2wv2mZ7Cw_WebFLC3e'
 
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_SUPABASE_URL ||
   DEFAULT_FALLBACK_URL
 ).replace(/\/$/, '')
 
 const SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_KEY ||
   DEFAULT_FALLBACK_KEY
 
 const IS_SUPABASE =
